@@ -1,3 +1,3 @@
-# Archived
+# Celle fr 26.2 port
 
-Bliver ikke vedligeholdt længere, da det er nu er blevet integreret ind i vores main plugin.
+This repository is a port of the archived CellePlugin from AbdisKiosk
