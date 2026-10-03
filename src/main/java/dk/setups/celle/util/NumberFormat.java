@@ -10,7 +10,7 @@ import java.util.Locale;
 public class NumberFormat {
 
     private @Inject Config config;
-    private static final java.text.NumberFormat format = java.text.NumberFormat.getInstance(Locale.GERMAN);
+    private static final java.text.NumberFormat format = java.text.NumberFormat.getInstance(Locale.ENGLISH);
     static {
         format.setMinimumFractionDigits(0);
     }

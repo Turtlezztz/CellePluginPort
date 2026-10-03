@@ -26,7 +26,7 @@ public class VaultUtils {
                     plugin.getServer().getServicesManager().getRegistration(Economy.class);
 
             if (economyProvider == null) {
-                logger.severe("Intet økonomiplugin fundet. Slår pluginnet fra.");
+                logger.severe("No economy plugin found. Disabling the plugin.");
                 Bukkit.getPluginManager().disablePlugin(plugin);
                 return;
             }

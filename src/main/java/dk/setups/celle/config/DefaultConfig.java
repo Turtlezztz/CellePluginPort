@@ -13,10 +13,10 @@ import java.util.List;
 @Configuration(path = "defaults.yml", provider = YamlSnakeYamlConfigurer.class)
 @SuppressWarnings("FieldMayBeFinal")
 @Header({
-        "Herinde kan du ændre standardindstillingerne for cellegrupper.",
-        "Hvis du ændrer noget herinde, og en cellegruppe ikke har en værdi sat i forvejen, vil denne værdi blive brugt.",
+        "Configure the default settings for cell groups here.",
+        "These defaults apply when a cell group has no explicit value for a setting.",
         "",
-        "Hvis du vil ændre en værdi for en specifik cellegruppe, skal du bruge ingame-kommandoerne."
+        "Use the in-game commands to change settings for a specific cell group."
 })
 public class DefaultConfig extends OkaeriConfig {
 
@@ -28,34 +28,34 @@ public class DefaultConfig extends OkaeriConfig {
     }
 
     private double rentPrice = 1000.0;
-    private String rentPermission = "fange";
+    private String rentPermission = "prisoner";
     private long cellRentMillis = 1000 * 60 * 60 * 24;
     private long maxRentMillis = 1000 * 60 * 60 * 24 * 10;
     private int maxCellsPerPlayer = 9999;
 
     private List<String> unrentedSignLines = Arrays.asList(
-            "&2&lLEDIG",
+            "&2&lAVAILABLE",
             "&a{cell.name}",
             "&a${cell.group.price.format-short}",
-            "&aKlik for at leje"
+            "&aClick to rent"
     );
 
     private List<String> rentedNonMemberSignLines = Arrays.asList(
-            "&4&lSOLGT",
+            "&4&lRENTED",
             "&c{cell.name}",
             "&c{cell.owner.name}",
             "&c{cell.time.left-short}"
     );
 
     private List<String> rentedMemberSignLines = Arrays.asList(
-            "&5&lMEDLEM",
+            "&5&lMEMBER",
             "&d{cell.name}",
             "&d{cell.owner.name}",
             "&d{cell.time.left-short}"
     );
 
     private List<String> rentedOwnerSignLines = Arrays.asList(
-            "&3&lEJET",
+            "&3&lOWNED",
             "&b{cell.name}",
             "&b{cell.owner.name}",
             "&b{cell.time.left-short}"

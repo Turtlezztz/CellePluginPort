@@ -31,7 +31,7 @@ import java.util.stream.IntStream;
 @Configuration(path = "guis/celllogs.yml", provider = YamlSnakeYamlConfigurer.class, serdes = GUISerdesPack.class)
 public class CellLogsGUI extends ConfigurableGUI<CellLogsGUIState> {
 
-    private String title = "Celle logs";
+    private String title = "Cell logs";
     private int rows = 6;
     private List<Integer> paginationSlots = IntStream.range(9, 45).boxed().collect(Collectors.toList());
 
@@ -41,9 +41,9 @@ public class CellLogsGUI extends ConfigurableGUI<CellLogsGUIState> {
                     .setLore(
                             "",
                             " §7§l» §7Log: §f{log.action}",
-                            " §7§l» §7Celle: §f{log.cell.name}",
-                            " §7§l» §7Spiller: §f{log.actor.name|§cIngen...}",
-                            " §7§l» §7Target: §f{log.target.name|§cIngen...}"
+                            " §7§l» §7Cell: §f{log.cell.name}",
+                            " §7§l» §7Player: §f{log.actor.name|§cNone...}",
+                            " §7§l» §7Target: §f{log.target.name|§cNone...}"
                     )
                     .build())
             .setSlots(Collections.emptyList())
@@ -51,10 +51,10 @@ public class CellLogsGUI extends ConfigurableGUI<CellLogsGUIState> {
 
     private ConfigGUIItem emptyItem = new ConfigGuiItemBuilder()
             .setItem(ItemBuilder.from(Material.BARRIER)
-                    .setName("§cIngen logs")
+                    .setName("§cNo logs")
                     .setLore(
                             "",
-                            " §7§l» §cDer ikke flere logs."
+                            " §7§l» §cThere are no more logs."
                     )
                     .build())
             .setSlots(Collections.emptyList())
@@ -67,20 +67,20 @@ public class CellLogsGUI extends ConfigurableGUI<CellLogsGUIState> {
                     .build())
             .addItem("nextpage", new ConfigGuiItemBuilder()
                     .setItem(ItemBuilder.from(Material.ARROW)
-                        .setName("§aNæste side")
+                        .setName("§aNext page")
                         .setLore(
                                 "",
-                                " §7§l» §fKlik for at se næste side."
+                                " §7§l» §fClick to view the next page."
                         )
                         .build())
                     .setSlot(5, 6)
                     .build())
             .addItem("prevpage", new ConfigGuiItemBuilder()
                     .setItem(ItemBuilder.from(Material.ARROW)
-                            .setName("§aForrige side")
+                            .setName("§aPrevious page")
                             .setLore(
                                     "",
-                                    " §7§l» §fKlik for at se forrige side."
+                                    " §7§l» §fClick to view the previous page."
                             )
                             .build())
                     .setSlot(5, 2)

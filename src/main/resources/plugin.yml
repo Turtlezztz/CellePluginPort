@@ -8,46 +8,46 @@ depend: [WorldGuard, WorldEdit, Vault]
 softdepend: [PlaceholderAPI]
 permissions:
   cell.command.unrent:
-    description: Giver dig adgang til at opsige din celle
+    description: Allows you to end your cell rental
     default: true
   cell.command.unrent.other:
-    description: Giver dig adgang til at opsige andres celler
+    description: Allows you to end other players' cell rentals
     default: op
   cell.command.member.add:
-    description: Giver dig adgang til at tilføje medlemmer til din celle
+    description: Allows you to add members to your cell
     default: true
   cell.command.member.add.other:
-    description: Giver dig adgang til at tilføje andre spillere til andres celler
+    description: Allows you to add members to other players' cells
     default: op
   cell.command.member.remove:
-    description: Giver dig adgang til at fjerne medlemmer fra din celle
+    description: Allows you to remove members from your cell
     default: true
   cell.command.member.remove.other:
-    description: Giver dig adgang til at fjerne andre spillere fra andres celler
+    description: Allows you to remove members from other players' cells
     default: op
   cell.command.info:
-    description: Giver dig adgang til at se information om din celle
+    description: Allows you to view information about your cell
     default: true
   cell.command.info.other:
-    description: Giver dig adgang til at se information om andres celler
+    description: Allows you to view information about other players' cells
     default: true
   cell.command.list:
-    description: Giver dig adgang til at se en liste over dine celler
+    description: Allows you to list your cells
     default: true
   cell.command.list.other:
-    description: Giver dig adgang til at se en liste over andres celler
+    description: Allows you to list other players' cells
     default: true
   cell.command.teleport:
-    description: Giver dig adgang til at teleportere til din celle
+    description: Allows you to teleport to your cell
     default: op
   cell.command.teleport.other:
-    description: Giver dig adgang til at teleportere til andres celler
+    description: Allows you to teleport to other players' cells
     default: op
   cell.admin:
-    description: Giver dig adgang til administrator kommandoer
+    description: Allows you to use administrator commands
     default: op
   cell.admin.migrate:
-    description: Giver adgang til at importere Staxi celler
+    description: Allows you to import Staxi cells
     default: op
 
 

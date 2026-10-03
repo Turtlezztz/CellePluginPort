@@ -43,9 +43,9 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                     .build())
             .addItem("delete", new ConfigGuiItemBuilder()
                     .setItem(ItemBuilder.from(Material.BARRIER)
-                            .setName("§4§lSLET CELLE")
+                            .setName("§4§lDELETE CELL")
                             .setLore("",
-                                    " §7§l» §cTryk for at slette §4{cell.name}§c.")
+                                    " §7§l» §cClick to delete §4{cell.name}§c.")
                             .build())
                     .setSlot(2, 1)
                     .build())
@@ -53,15 +53,15 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                     .setItem(ItemBuilder.from(Material.REDSTONE_BLOCK)
                             .setName("§4§lUNRENT")
                             .setLore("",
-                                    " §7§l» §cTryk for at unrente §4{cell.name}§c.")
+                                    " §7§l» §cClick to end the rental of §4{cell.name}§c.")
                             .build())
                     .setSlot(2, 4)
                     .build())
             .addItem("extend", new ConfigGuiItemBuilder()
                     .setItem(ItemBuilder.from(Material.OAK_SIGN)
-                            .setName("§6§lFORLÆNG")
+                            .setName("§6§lEXTEND")
                             .setLore("",
-                                    " §7§l» §aTryk for at forlænge §2{cell.name}§a.")
+                                    " §7§l» §aClick to extend the rental of §2{cell.name}§a.")
                             .build()
                     )
                     .setSlot(2, 7)
@@ -71,12 +71,12 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                             .setName("§6§lINFO")
                             .setLore("§6§lINFORMATION",
                                     "",
-                                    " §7§l» §aNavn: §2{cell.name}",
-                                    " §7§l» §aEjer: §2{cell.owner.name}",
-                                    " §7§l» §aLejet til: §2{cell.rent.format-long}",
-                                    " §7§l» §aTid tilbage: §2{cell.rent.left-long}",
-                                    " §7§l» §aPris: §2{cell.group.price.format-long}",
-                                    " §7§l» §aGruppe: §2{cell:group.name}",
+                                    " §7§l» §aName: §2{cell.name}",
+                                    " §7§l» §aOwner: §2{cell.owner.name}",
+                                    " §7§l» §aRented until: §2{cell.rent.format-long}",
+                                    " §7§l» §aTime remaining: §2{cell.rent.left-long}",
+                                    " §7§l» §aPrice: §2{cell.group.price.format-long}",
+                                    " §7§l» §aGroup: §2{cell:group.name}",
                                     " §7§l» §aRegion: §2{cell:region.name}",
                                     "")
                             .build())
@@ -87,7 +87,7 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                             .setName("§6§lLOGS")
                             .setLore("§6§lLOGS",
                                     "",
-                                    " §7§l» §aKlik for at se logs for §2{cell.name}§a.",
+                                    " §7§l» §aClick to view the logs for §2{cell.name}§a.",
                                     "")
                             .build())
                     .setSlot(4, 5)

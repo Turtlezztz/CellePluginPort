@@ -18,7 +18,7 @@ import org.bukkit.command.CommandSender;
 import java.io.File;
 
 @Sync
-@Command(label = "celle-migrate")
+@Command(label = "cell-migrate", aliases = "celle-migrate")
 @Permission("cell.admin.migrate")
 public class MigrateCommand implements CommandService {
     private @Inject StoreManager stores;
@@ -29,11 +29,11 @@ public class MigrateCommand implements CommandService {
 
     @Executor
     public void staxi(@Context CommandSender sender, @Arg String path) {
-        sender.sendMessage("Migrerer " + path + " fra Staxi format");
+        sender.sendMessage("Migrating " + path + " from Staxi format");
         CellMigrator migrator = new StaxiCellMigrator(stores, factory, getSubFolder(path));
         migrator.migrate();
         stores.getCellStore().getAll().forEach(utils::update);
-        sender.sendMessage("Migrerede " + path + " fra Staxi format");
+        sender.sendMessage("Migrated " + path + " from Staxi format");
     }
 
 

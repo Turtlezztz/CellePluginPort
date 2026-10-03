@@ -12,6 +12,8 @@ Validated with Temurin Java 25, Gradle 9.1.0 and the pinned Paper 26.2 build 129
 | Duration parsing | 2 | Positive compound durations, invalid/overflow input |
 | Time formatting | 2 | Zero/negative durations and date substitutions |
 
+The English localization build also passes all 21 tests. The language configuration retains every existing message key and substitution placeholder; time-format expectations now use English labels. The native server results below were recorded before the localization change and have not been rerun for it.
+
 The test report is generated at `build/reports/tests/test/index.html`.
 
 ## Native Paper server checks

@@ -39,7 +39,7 @@ public class CellCommand implements CommandService {
     public void unrent(@Context Player player, @Arg("cell") Option<Cell> cellOption) {
         Cell cell = cellOption.orElseGet(() -> api.getCellAtLocation(player.getLocation()).orElse(null));
         if(cell == null) {
-            player.sendMessage("§cDu skal skrive en celle");
+            player.sendMessage("§cYou must specify a cell.");
             return;
         }
 
@@ -61,7 +61,7 @@ public class CellCommand implements CommandService {
     public void addMember(@Context Player sender, @Arg Player target, @Arg("cell") Option<Cell> cellOption) {
         Cell cell = cellOption.orElseGet(() -> api.getCellAtLocation(sender.getLocation()).orElse(null));
         if(cell == null) {
-            sender.sendMessage("§cDu skal skrive en celle");
+            sender.sendMessage("§cYou must specify a cell.");
             return;
         }
         if(!sender.hasPermission("cell.command.member.add.other") && !cell.isOwner(stores.getUserStore().get(sender))) {
@@ -102,7 +102,7 @@ public class CellCommand implements CommandService {
     public void removeMember(@Context Player sender, @Arg CellUser target, @Arg("cell") Option<Cell> cellOption) {
         Cell cell = cellOption.orElseGet(() -> api.getCellAtLocation(sender.getLocation()).orElse(null));
         if(cell == null) {
-            sender.sendMessage("§cDu skal skrive en celle");
+            sender.sendMessage("§cYou must specify a cell.");
             return;
         }
         if(!sender.hasPermission("cell.command.member.remove.other") && !cell.isOwner(stores.getUserStore().get(sender))) {
@@ -136,7 +136,7 @@ public class CellCommand implements CommandService {
     public void info(@Context Player player, @Arg("cell") Option<Cell> cellOption) {
         Cell cell = cellOption.orElseGet(() -> api.getCellAtLocation(player.getLocation()).orElse(null));
         if(cell == null) {
-            player.sendMessage("§cDu skal skrive en celle");
+            player.sendMessage("§cYou must specify a cell.");
             return;
         }
 

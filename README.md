@@ -1,6 +1,6 @@
 # Celler for Paper 26.2
 
-Modernized from the archived CellePlugin by AbdisKiosk. This version preserves the Danish commands/messages, cell groups, rentals, members, logs, configurable inventories, PlaceholderAPI expansion and Staxi importer.
+Modernized from the archived CellePlugin by AbdisKiosk. This version uses English commands, messages, menus, signs, configuration comments and time/number formatting. It retains cell groups, rentals, members, logs, configurable inventories, the PlaceholderAPI expansion and Staxi importer.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ Set `JAVA_HOME` to a JDK 25 installation, then run:
 
 Install `build/libs/celle-fr-26.2-port-2.0.0-combined.jar` in the server's `plugins` folder, alongside the dependencies above. Install only one Celler jar. The jar bundles SQLite, configuration, database and inventory libraries; Paper, WorldGuard, WorldEdit, Vault and PlaceholderAPI remain external dependencies.
 
-Start the server normally. Configuration is generated in `plugins/Celler`: `config.yml`, `defaults.yml`, `lang/dk.yml`, `guis/`, and `cell.db`. Administrators use `/cea`; players use `/ce`. Both labels and command patterns can be customized in `lang/dk.yml`; restart after changing command patterns. `/cea reload` reloads configuration, messages, inventories and the sign/expiration timer. Reopen inventories to see their updated configuration. Use a full server restart to replace the jar.
+Start the server normally. Configuration is generated in `plugins/Celler`: `config.yml`, `defaults.yml`, `lang/en.yml`, `guis/`, and `cell.db`. Administrators use `/celladmin` or `/cea`; players use `/cell` or `/ce`. Both labels and command patterns can be customized in `lang/en.yml`; restart after changing command patterns. `/cea reload` reloads configuration, messages, inventories and the sign/expiration timer. Reopen inventories to see their updated configuration. Use a full server restart to replace the jar.
 
 ## Upgrade an existing installation
 
@@ -32,11 +32,24 @@ Start the server normally. Configuration is generated in `plugins/Celler`: `conf
 
 Legacy inventory material names and data colors such as `STAINED_GLASS_PANE` with `durability: 15` are translated to modern materials. Unsupported material names now fail with a configuration error instead of silently producing the wrong item. Inventory rows must be 1–6 and slots must fit the inventory.
 
-Existing customized command aliases are preserved. New installations use `/cea group set price <group> <price>`; an old `commandCeaGroupSetRentPriceAlias` value of `group set permission * *` will retain that spelling until you edit it. Durations accept positive combinations of `d`, `h`/`t`, `m` and `s`, for example `1d2t30m`.
+Customized command aliases in `lang/en.yml` are preserved. Transfer any aliases you want to keep from the old locale file. New installations use `/cea group set price <group> <price>`; an old `commandCeaGroupSetRentPriceAlias` value of `group set permission * *` will retain that spelling until you edit it. Durations accept positive combinations of `d`, `h`/`t`, `m` and `s`, for example `1d2h30m`. The legacy `t` hour suffix remains supported.
 
 The available-cell inventory supports paging using item keys `nextpage` and `prevpage` in `guis/cellsinregion.yml`. If an existing customized `items` map omits these keys, add two arrow items with unused slots using the same structure as the other items, or regenerate that one file after saving a copy. Fresh installations generate the buttons automatically.
 
 The preserved database schema requires region names to be unique across worlds and stores teleport positions as integer block coordinates. The port rejects conflicting region assignments rather than overwriting an existing cell. Staxi import remains available through the migration command and the `cell.admin.migrate` permission.
+
+## Switch an existing installation to English
+
+The default locale is now `en`, and a new `lang/en.yml` is generated with English messages and command patterns. The player command is `/cell` (short alias `/ce`), and ending a rental uses `/ce unrent [cell]`. Staxi import uses `/cell-migrate <plugin-folder>`; `/celle-migrate` remains an alias. Fresh cell groups require the `prisoner` permission by default; existing groups keep their configured rental permission, including `fange`.
+
+Existing YAML values and database records remain unchanged. To adopt all English defaults on an existing server:
+
+1. Stop the server and back up `plugins/Celler`.
+2. Move `lang/dk.yml` out of the `lang` directory so the old locale cannot serve Danish messages. Transfer any desired customizations to `lang/en.yml` after it is generated.
+3. Move `config.yml`, `defaults.yml` and `guis/` into your backup so the plugin regenerates English versions on startup. Reapply your limits, rental prices, permissions, timings and inventory customizations afterward. Alternatively, translate those files in place.
+4. Start the server with the new jar. Keep `cell.db` in place to preserve cells, rentals and memberships.
+
+Groups with explicit sign text stored in the database keep that text. Translate those lines with `/cea group set sign <group> <state> <line> <text>` for each applicable state (`unrented`, `rented-non-member`, `rented-member`, `rented-owner`). Groups using the defaults display the regenerated English sign text automatically.
 
 ## Behavior changes
 

@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
 public class CellsInRegionGUI extends ConfigurableGUI<CellsInRegionGUIState> {
 
     @Getter
-    private String title = "Celler i {region.name}";
+    private String title = "Cells in {region.name}";
     @Getter
     private int rows = 6;
     @Getter
@@ -41,14 +41,14 @@ public class CellsInRegionGUI extends ConfigurableGUI<CellsInRegionGUIState> {
                     .setItem(new ItemStack(Material.BLACK_STAINED_GLASS_PANE))
                     .setSlots(IntStream.range(0, 9), IntStream.range(45, 54))
                     .build())
-            .addItem("nextpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aNæste side").build()).setSlot(5, 6).build())
-            .addItem("prevpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aForrige side").build()).setSlot(5, 2).build())
+            .addItem("nextpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aNext page").build()).setSlot(5, 6).build())
+            .addItem("prevpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aPrevious page").build()).setSlot(5, 2).build())
             .build();
 
     private List<Integer> cellItemSlots = IntStream.range(9, 45).boxed().collect(Collectors.toList());
     private ItemStack cellItem = ItemBuilder.from(Material.IRON_DOOR)
             .setName("§7{cell.name}")
-            .setLore(" §7§l» §7Pris: §a${cell.group.price.format-long}")
+            .setLore(" §7§l» §7Price: §a${cell.group.price.format-long}")
             .build();
 
     private transient @Inject StoreManager store;

@@ -11,12 +11,12 @@ class TimeFormatTest {
         field.set(format,new Config());
     }
     @Test void zeroAndExpiredTimesDoNotCrashGuiRendering() {
-        assertEquals("0 sekunder", format.formatLongLeft(0));
-        assertEquals("0 sekunder", format.formatLongLeft(-1000));
+        assertEquals("0 seconds", format.formatLongLeft(0));
+        assertEquals("0 seconds", format.formatLongLeft(-1000));
         assertEquals("0s", format.formatConsiseLeft(0));
     }
     @Test void displaysLargerUnitsFirst() {
-        assertEquals("1d 2t 3m", format.formatConsiseLeft(86_400_000 + 7_200_000 + 180_000));
-        assertEquals("1 time", format.formatLongLeft(3_600_000));
+        assertEquals("1d 2h 3m", format.formatConsiseLeft(86_400_000 + 7_200_000 + 180_000));
+        assertEquals("1 hour", format.formatLongLeft(3_600_000));
     }
 }

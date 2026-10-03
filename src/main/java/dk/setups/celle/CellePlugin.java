@@ -50,7 +50,7 @@ public class CellePlugin extends OkaeriBukkitPlugin {
     public EmptyConfig loadLocaleConfig(LocaleConfig localeConfig) {
         return ConfigManager.create(EmptyConfig.class, (it) -> {
             it.withConfigurer(new YamlSnakeYamlConfigurer(), new SerdesBukkit());
-            it.withBindFile(new File(new File(this.getDataFolder(), "lang"), "dk.yml"));
+            it.withBindFile(new File(new File(this.getDataFolder(), "lang"), "en.yml"));
             it.withRemoveOrphans(false);
             it.saveDefaults();
             it.load(false);
@@ -61,7 +61,7 @@ public class CellePlugin extends OkaeriBukkitPlugin {
     public void saveLocaleConfig() {
         ConfigManager.create(LangConfig.class, (it) -> {
             it.withConfigurer(new YamlSnakeYamlConfigurer(), new SerdesBukkit());
-            it.withBindFile(new File(new File(this.getDataFolder(), "lang"), "dk.yml"));
+            it.withBindFile(new File(new File(this.getDataFolder(), "lang"), "en.yml"));
             it.withRemoveOrphans(false);
             it.saveDefaults();
             it.load(false);
