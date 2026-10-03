@@ -5,8 +5,6 @@ import dev.triumphteam.gui.components.GuiAction;
 import dev.triumphteam.gui.guis.BaseGui;
 import dev.triumphteam.gui.guis.GuiItem;
 import dk.setups.celle.cell.log.CellLog;
-import dk.setups.celle.cell.log.CellLogFilter;
-import dk.setups.celle.command.CellAdminCommand;
 import dk.setups.celle.database.StoreManager;
 import dk.setups.celle.gui.ConfigGuiItemBuilder;
 import dk.setups.celle.gui.ConfigurableGUI;
@@ -15,16 +13,11 @@ import dk.setups.celle.gui.config.GUISerdesPack;
 import dk.setups.celle.gui.config.item.ConfigGUIItem;
 import dk.setups.celle.gui.config.item.ItemMapBuilder;
 import dk.setups.celle.gui.pagination.PaginationProvider;
-import dk.setups.celle.gui.state.GUIState;
 import eu.okaeri.configs.yaml.snakeyaml.YamlSnakeYamlConfigurer;
 import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.placeholders.Placeholders;
-import eu.okaeri.placeholders.context.PlaceholderContext;
-import eu.okaeri.placeholders.message.CompiledMessage;
 import eu.okaeri.platform.core.annotation.Configuration;
 import lombok.Getter;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -69,7 +62,7 @@ public class CellLogsGUI extends ConfigurableGUI<CellLogsGUIState> {
 
     private LinkedHashMap<String, ConfigGUIItem> items = new ItemMapBuilder()
             .addItem("decoration", new ConfigGuiItemBuilder()
-                    .setItem(ItemBuilder.from(Material.STAINED_GLASS_PANE).color(Color.BLUE).build())
+                    .setItem(ItemBuilder.from(Material.BLUE_STAINED_GLASS_PANE).build())
                     .setSlots(IntStream.range(0, 9), IntStream.range(45, 54))
                     .build())
             .addItem("nextpage", new ConfigGuiItemBuilder()

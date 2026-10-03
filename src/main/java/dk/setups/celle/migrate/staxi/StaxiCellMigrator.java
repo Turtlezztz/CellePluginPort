@@ -21,7 +21,9 @@ public class StaxiCellMigrator extends CellMigrator {
         Set<MigrateCell> migrateCells = new HashSet<>();
 
         File file = new File(getFolder(), "Celler");
-        for(File cellFile : file.listFiles()) {
+        File[] files = file.listFiles((directory, name) -> name.endsWith(".yml"));
+        if (files == null) throw new IllegalArgumentException("Staxi cell directory not found: " + file);
+        for(File cellFile : files) {
             StaxiCell cell = StaxiCell.from(YamlConfiguration.loadConfiguration(cellFile));
             migrateCells.add(cell.toCell(cellFile.getName().replace(".yml", "")));
         }

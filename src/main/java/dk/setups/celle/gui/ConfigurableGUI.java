@@ -14,6 +14,7 @@ import java.util.Map;
 public abstract class ConfigurableGUI<T extends GUIState> extends GUIConfiguration {
 
     public BaseGui create(T state) {
+        if (getRows() < 1 || getRows() > 6) throw new IllegalArgumentException("GUI rows must be between 1 and 6");
         BaseGui gui = Gui.gui()
                 .title(getPlaceholderUtils().withPlaceholders(state, getTitle()))
                 .rows(getRows())
@@ -32,7 +33,10 @@ public abstract class ConfigurableGUI<T extends GUIState> extends GUIConfigurati
             GuiItem guiItem =
                     new GuiItem(getPlaceholderUtils().withPlaceholders(state, item.getItem()), clickEvents.get(key));
 
-            item.getSlots().forEach(slot -> gui.setItem(slot, guiItem));
+            item.getSlots().forEach(slot -> {
+                if (slot < 0 || slot >= getRows() * 9) throw new IllegalArgumentException("Invalid GUI slot: " + slot);
+                gui.setItem(slot, guiItem);
+            });
         });
     }
 

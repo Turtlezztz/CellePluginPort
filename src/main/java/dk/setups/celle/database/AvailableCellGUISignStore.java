@@ -2,7 +2,6 @@ package dk.setups.celle.database;
 
 import com.j256.ormlite.dao.Dao;
 import dk.setups.celle.sign.AvailableCellsGUISign;
-import dk.setups.celle.sign.CellSign;
 import org.bukkit.Location;
 
 import java.util.List;

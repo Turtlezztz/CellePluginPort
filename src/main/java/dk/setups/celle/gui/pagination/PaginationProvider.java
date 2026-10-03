@@ -2,13 +2,10 @@ package dk.setups.celle.gui.pagination;
 
 import dev.triumphteam.gui.guis.BaseGui;
 import dev.triumphteam.gui.guis.GuiItem;
-import org.bukkit.Bukkit;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class PaginationProvider<T> {
 
@@ -41,7 +38,7 @@ public class PaginationProvider<T> {
     }
 
     public void setPage(int page) {
-        this.page = page;
+        this.page = Math.max(1, page);
         update();
     }
 

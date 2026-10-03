@@ -32,7 +32,7 @@ public class StringListPersister extends StringType {
 
     @Override
     public Object sqlArgToJava(FieldType fieldType, Object sqlArg, int columnPos) throws SQLException {
-        String[] strings = ((String) sqlArg).split(SEPARATOR);
+        String[] strings = ((String) sqlArg).split(SEPARATOR, -1);
         return Arrays.asList(strings);
     }
 

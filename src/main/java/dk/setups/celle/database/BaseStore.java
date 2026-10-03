@@ -2,7 +2,6 @@ package dk.setups.celle.database;
 
 import com.j256.ormlite.dao.Dao;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +37,7 @@ public abstract class BaseStore<K, V> {
         try {
             this.dao.createOrUpdate(value);
         } catch (Exception exception) {
-            logger.log(Level.SEVERE, "Failed to create/update " + value.toString(), exception);
+            throw new IllegalStateException("Failed to persist " + value.getClass().getSimpleName(), exception);
         }
     }
 

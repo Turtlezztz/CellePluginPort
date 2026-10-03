@@ -30,6 +30,7 @@ public class CellStore extends BaseStore<Integer, Cell> {
 
     public void updateCache() {
         try {
+            cache.clear();
             for (Cell cell : getDao().queryForAll()) {
                 cache.update(cell.getId(), cell);
             }
@@ -40,8 +41,8 @@ public class CellStore extends BaseStore<Integer, Cell> {
 
     @Override
     public void persist(Cell cell) {
-        cache.update(cell.getId(), cell);
         super.persist(cell);
+        cache.update(cell.getId(), cell);
     }
 
     @Override
@@ -80,25 +81,43 @@ public class CellStore extends BaseStore<Integer, Cell> {
         }
     }
 
-    //TODO: Change this to database-level synchronization
+    /** Database transaction prevents partial ownership changes or member deletion on failure. */
     public synchronized boolean tryChangeOwner(Cell cell, CellUser newOwner, Date ownerUntil) {
         try {
-            return getDao().callBatchTasks(() -> {
+            Cell rented = com.j256.ormlite.misc.TransactionManager.callInTransaction(getDao().getConnectionSource(), () -> {
                 Cell loaded = getDao().queryForId(cell.getId());
-                if (loaded == null || loaded.isRented()) {
-                    return false;
-                }
+                if (loaded == null || loaded.isRented()) return null;
                 loaded.setOwner(newOwner);
                 loaded.setRentedUntil(ownerUntil);
                 loaded.clearMembers();
-                persist(loaded);
-                return true;
+                getDao().update(loaded);
+                return getDao().queryForId(loaded.getId());
             });
+            if (rented == null) return false;
+            cell.setOwner(rented.getOwner());
+            cell.setRentedUntil(rented.getRentedUntil());
+            cell.setMembers(rented.getMembers());
+            cache.update(rented.getId(), rented);
+            return true;
         } catch (Exception exception) {
-            getLogger().log(Level.SEVERE,
-                    "Failed to change owner of cell " + cell.getName() + " to " + newOwner.getName(), exception);
+            getLogger().log(Level.SEVERE, "Failed to rent cell " + cell.getName(), exception);
+            return false;
         }
-        return false;
+    }
+
+    /** Mutate a fresh entity inside a transaction; publish it to the cache after commit. */
+    public void mutate(Cell cell, java.util.function.Consumer<Cell> mutation) {
+        Cell updated = getStores().transaction(() -> {
+            Cell current = getDao().queryForId(cell.getId());
+            if (current == null) throw new IllegalArgumentException("Cell no longer exists");
+            mutation.accept(current);
+            getDao().update(current);
+            return getDao().queryForId(current.getId());
+        });
+        cell.setOwner(updated.getOwner());
+        cell.setRentedUntil(updated.getRentedUntil());
+        cell.setMembers(updated.getMembers());
+        cache.update(updated.getId(), updated);
     }
 
     public Collection<Cell> getOwnedCells(CellUser user) {
@@ -132,12 +151,17 @@ public class CellStore extends BaseStore<Integer, Cell> {
     }
 
     public Collection<Cell> getCellsInRegions(Collection<ProtectedRegion> regions) {
+        return getCellsInRegions(regions, null);
+    }
+
+    public Collection<Cell> getCellsInRegions(Collection<ProtectedRegion> regions, String world) {
         try {
             Set<String> names = regions.stream().map(ProtectedRegion::getId).collect(Collectors.toSet());
-            return getDao().queryBuilder()
-                    .join(getStores().getRegionStore().getDao().queryBuilder()
-                            .where().in("worldguard_region_name", names).queryBuilder())
-                    .query();
+            if (names.isEmpty()) return Collections.emptyList();
+            var regionQuery = getStores().getRegionStore().getDao().queryBuilder();
+            var where = regionQuery.where().in("worldguard_region_name", names);
+            if (world != null) where.and().eq("worldguard_region_world", world);
+            return getDao().queryBuilder().join(regionQuery).query();
         } catch(SQLException ex) {
             getLogger().log(Level.SEVERE, "Failed to get cells in regions", ex);
         }
@@ -147,7 +171,7 @@ public class CellStore extends BaseStore<Integer, Cell> {
     public Optional<Cell> getFromName(String name) {
         try {
             return Optional.ofNullable(getDao().queryBuilder().where()
-                    .like("name", name)
+                    .eq("name", name.toLowerCase(java.util.Locale.ROOT))
                     .queryForFirst());
         } catch(Exception exception) {
             getLogger().log(Level.SEVERE, "Failed to get cell from name " + name, exception);

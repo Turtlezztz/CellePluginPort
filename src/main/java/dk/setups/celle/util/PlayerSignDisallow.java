@@ -31,6 +31,10 @@ public class PlayerSignDisallow {
     public boolean isDisallowed(@NotNull UUID player) {
         long time = System.currentTimeMillis();
 
-        return disallowed.getOrDefault(player, 0L) > time;
+        Long until = disallowed.get(player);
+        if (until == null) return false;
+        if (until > time) return true;
+        disallowed.remove(player);
+        return false;
     }
 }

@@ -2,7 +2,6 @@ package dk.setups.celle.util.cell;
 
 import dk.setups.celle.cell.Cell;
 import dk.setups.celle.cell.CellUser;
-import dk.setups.celle.database.CellStore;
 import dk.setups.celle.database.StoreManager;
 import dk.setups.celle.event.member.CellAddMemberEvent;
 import dk.setups.celle.event.member.CellRemoveMemberEvent;
@@ -15,14 +14,12 @@ import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.platform.core.annotation.Component;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 
 import java.util.Date;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 public class CellAPI {
@@ -33,15 +30,20 @@ public class CellAPI {
     private @Inject WorldGuardUtils worldGuard;
 
     public EventSuccess extendCell(Cell cell, CellUser user) {
+        if (!cell.canExtend()) return EventSuccess.FAILED;
         if (this.callEvent(new CellExtendEvent(cell, user))) {
             return EventSuccess.CANCELLED;
         }
-        cell.extend();
-        utils.updateAndSave(cell);
+        stores.getCellStore().mutate(cell, current -> {
+            if (!current.canExtend()) throw new IllegalArgumentException("Cell cannot be extended");
+            current.extend();
+        });
+        utils.update(cell);
         return EventSuccess.SUCCESS;
     }
 
     public EventSuccess rentCell(Cell cell, CellUser user) {
+        if (cell.isRented()) return EventSuccess.FAILED;
         if (this.callEvent(new CellRentEvent(cell, user))) {
             return EventSuccess.CANCELLED;
         }
@@ -57,8 +59,8 @@ public class CellAPI {
         if (this.callEvent(new CellUnrentEvent(cell, user))) {
             return EventSuccess.CANCELLED;
         }
-        cell.unrent();
-        utils.updateAndSave(cell);
+        stores.getCellStore().mutate(cell, Cell::unrent);
+        utils.update(cell);
         return EventSuccess.SUCCESS;
     }
 
@@ -70,8 +72,8 @@ public class CellAPI {
         if(this.callEvent(new CellAddMemberEvent(cell, user, target))) {
             return EventSuccess.CANCELLED;
         }
-        cell.addMember(target);
-        utils.updateAndSave(cell);
+        stores.getCellStore().mutate(cell, current -> current.addMember(target));
+        utils.update(cell);
         return EventSuccess.SUCCESS;
     }
 
@@ -79,23 +81,27 @@ public class CellAPI {
         if(this.callEvent(new CellRemoveMemberEvent(cell, user, target))) {
             return EventSuccess.CANCELLED;
         }
-        cell.removeMember(target);
-        utils.updateAndSave(cell);
+        stores.getCellStore().mutate(cell, current -> current.removeMember(target));
+        utils.update(cell);
         return EventSuccess.SUCCESS;
     }
 
     public void expireCell(Cell cell) {
         callEvent(new CellExpireEvent(cell));
-        cell.unrent();
-        utils.updateAndSave(cell);
+        stores.getCellStore().mutate(cell, Cell::unrent);
+        utils.update(cell);
     }
 
     public Optional<Cell> getCellAtLocation(Location location) {
-        return worldGuard.getHighestPriority(location)
-                .flatMap(region -> stores.getCellStore().getFromRegion(region.getId(), location.getWorld().getName()));
+        if (location.getWorld() == null) return Optional.empty();
+        return worldGuard.getRegionsAt(location).stream()
+                .sorted(java.util.Comparator.comparingInt(com.sk89q.worldguard.protection.regions.ProtectedRegion::getPriority).reversed())
+                .map(region -> stores.getCellStore().getFromRegion(region.getId(), location.getWorld().getName()))
+                .flatMap(Optional::stream).findFirst();
     }
 
     private boolean callEvent(Event event) {
+        if (!org.bukkit.Bukkit.isPrimaryThread()) throw new IllegalStateException("Cell events require the server thread");
         pluginManager.callEvent(event);
         return event instanceof Cancellable && ((Cancellable) event).isCancelled();
     }

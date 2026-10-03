@@ -9,7 +9,6 @@ import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.injector.annotation.Inject;
 import lombok.NonNull;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.Collections;

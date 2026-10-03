@@ -1,8 +1,6 @@
 package dk.setups.celle.command;
 
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import dk.setups.celle.cell.Cell;
-import dk.setups.celle.cell.CellMember;
 import dk.setups.celle.cell.CellUser;
 import dk.setups.celle.config.LangConfig;
 import dk.setups.celle.database.StoreManager;
@@ -12,20 +10,18 @@ import dk.setups.celle.util.WorldGuardUtils;
 import dk.setups.celle.util.cell.EventSuccess;
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.annotation.*;
-import eu.okaeri.commands.bukkit.annotation.Async;
+import eu.okaeri.commands.bukkit.annotation.Sync;
 import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.Option;
 import eu.okaeri.injector.annotation.Inject;
-import eu.okaeri.platform.bukkit.annotation.Chain;
 import eu.okaeri.platform.bukkit.i18n.BI18n;
 import eu.okaeri.platform.bukkit.i18n.message.BukkitMessageDispatcher;
-import eu.okaeri.tasker.core.chain.TaskerChain;
 import org.bukkit.entity.Player;
 
 import java.util.*;
 
-@Async
+@Sync
 @Command(label = "#{commandCellLabel}", description = "${commandCellDescription}", aliases = {"#{commandCellAlias}"})
 public class CellCommand implements CommandService {
 
@@ -116,7 +112,7 @@ public class CellCommand implements CommandService {
             return;
         }
 
-        if(!cell.isPermitted(target)) {
+        if(cell.isOwner(target) || !cell.isPermitted(target)) {
             i18n.get(lang.getCommandCellMemberRemoveNotMember())
                     .with("target", target)
                     .with("cell", cell)
@@ -199,7 +195,7 @@ public class CellCommand implements CommandService {
     @Executor(pattern = {"#{commandCellTeleportAlias}"}, description = "${commandCellTeleportDescription}", usage = "${commandCellTeleportUsage}")
     @Permission("cell.command.teleport")
     @Completion(arg = "cell", value = "@cells:permitted")
-    public void teleport(@Context Player player, @Arg Cell cell, @Chain TaskerChain<?> chain) {
+    public void teleport(@Context Player player, @Arg Cell cell) {
         if(!cell.isPermitted(player) && !player.hasPermission("cell.command.teleport.other")) {
             i18n.get(lang.getCommandCellTeleportNotMember()).with("cell", cell).sendTo(player);
             return;
@@ -210,7 +206,11 @@ public class CellCommand implements CommandService {
             return;
         }
 
-        chain.sync(() -> player.teleport(cell.getTeleport().asBukkit())).execute();
+        if (cell.getTeleport().asBukkit().getWorld() == null) {
+            i18n.get(lang.getCommandCellTeleportNoTeleport()).with("cell", cell).sendTo(player);
+            return;
+        }
+        player.teleport(cell.getTeleport().asBukkit());
     }
 
 }

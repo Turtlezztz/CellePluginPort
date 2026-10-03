@@ -1,5 +1,6 @@
 package dk.setups.celle.util;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.IncompleteRegionException;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -14,7 +15,7 @@ import java.util.Optional;
 public class WorldEditUtils {
 
     public Optional<CuboidRegion> getSelection(Player player) {
-        LocalSession session = WorldEdit.getInstance().getSessionManager().findByName(player.getName());
+        LocalSession session = WorldEdit.getInstance().getSessionManager().get(BukkitAdapter.adapt(player));
         if(session == null) {
             return Optional.empty();
         }

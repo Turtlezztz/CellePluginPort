@@ -7,7 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 @Component
-public class RespawnListener {
+public class RespawnListener implements org.bukkit.event.Listener {
 
     private @Inject PlayerSignDisallow disallow;
 

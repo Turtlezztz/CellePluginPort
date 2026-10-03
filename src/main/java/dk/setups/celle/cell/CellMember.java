@@ -1,12 +1,11 @@
 package dk.setups.celle.cell;
 
 import com.j256.ormlite.field.DatabaseField;
-import com.j256.ormlite.misc.BaseDaoEnabled;
 import com.j256.ormlite.table.DatabaseTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-@Data @EqualsAndHashCode(callSuper = false)
+@Data @lombok.ToString(exclude = "cell") @EqualsAndHashCode(exclude = "cell", callSuper = false)
 @DatabaseTable(tableName = CellMember.TABLE_NAME)
 public class CellMember {
 

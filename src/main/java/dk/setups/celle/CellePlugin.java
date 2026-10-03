@@ -1,6 +1,5 @@
 package dk.setups.celle;
 
-import dev.triumphteam.gui.guis.Gui;
 import dk.setups.celle.api.PlaceholderAPIExpansion;
 import dk.setups.celle.cell.*;
 import dk.setups.celle.command.completions.CellCompletion;
@@ -13,8 +12,6 @@ import dk.setups.celle.command.types.GroupTypeResolver;
 import dk.setups.celle.command.types.ProtectedRegionResolver;
 import dk.setups.celle.config.Config;
 import dk.setups.celle.config.LangConfig;
-import dk.setups.celle.database.CellGroupStore;
-import dk.setups.celle.database.CellStore;
 import dk.setups.celle.database.StoreManager;
 import dk.setups.celle.gui.cell.CellAdminGUI;
 import dk.setups.celle.gui.cell.logs.CellLogsGUI;
@@ -43,12 +40,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Scan(deep = true, exclusions = "dk.setups.libs.celle")
+@Scan(deep = true, exclusions = {"dk.setups.libs.celle", "dk.setups.celle.api"})
 public class CellePlugin extends OkaeriBukkitPlugin {
 
     @Bean
@@ -75,6 +70,7 @@ public class CellePlugin extends OkaeriBukkitPlugin {
 
     @Planned(ExecutionPhase.POST_SETUP)
     public void registerCommands(Injector injector, Commands commands) {
+        commands.registerTypeExclusive(java.time.Duration.class, new dk.setups.celle.command.types.DurationTypeResolver());
         commands.registerType(injector.createInstance(GroupTypeResolver.class));
         commands.registerType(injector.createInstance(CellTypeResolver.class));
         commands.registerType(injector.createInstance(CellUserTypeResolver.class));
@@ -100,9 +96,13 @@ public class CellePlugin extends OkaeriBukkitPlugin {
         injector.registerInjectable("messageAssembler", (MessageAssembler) AdventureMessage::of);
     }
 
+    private TaskUpdateCells updateTask;
+
     @Planned(ExecutionPhase.POST_SETUP)
     public void setupTasks(Injector injector, Config config) {
-        injector.createInstance(TaskUpdateCells.class).runTaskTimerAsynchronously(this, 0L, config.getUpdateSignsDelayTick());
+        if (updateTask != null) updateTask.cancel();
+        updateTask = injector.createInstance(TaskUpdateCells.class);
+        updateTask.runTaskTimer(this, 1L, Math.max(1, config.getUpdateSignsDelayTick()));
     }
 
     @Planned(ExecutionPhase.POST_SETUP)
@@ -116,12 +116,16 @@ public class CellePlugin extends OkaeriBukkitPlugin {
         }
     }
 
+    private Runnable unregisterPlaceholders;
+
     @Planned(ExecutionPhase.POST_SETUP)
     public void registerPlaceholders(StoreManager storeManager) {
+        if (!Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) return;
         PlaceholderAPIExpansion placeholderAPIExpansion =
                 new PlaceholderAPIExpansion(storeManager.getGroupStore(), storeManager.getCellStore(),
                         storeManager.getUserStore());
         placeholderAPIExpansion.register();
+        unregisterPlaceholders = placeholderAPIExpansion::unregister;
     }
 
     private PlaceholderResolvers resolvers;
@@ -140,6 +144,8 @@ public class CellePlugin extends OkaeriBukkitPlugin {
 
     @Planned(ExecutionPhase.SHUTDOWN)
     public void shutdownStores(StoreManager stores) throws Exception {
+        Bukkit.getScheduler().cancelTasks(this);
+        if (unregisterPlaceholders != null) unregisterPlaceholders.run();
         stores.disconnect();
     }
 
@@ -154,7 +160,7 @@ public class CellePlugin extends OkaeriBukkitPlugin {
                 continue;
             }
             Inventory top = inventory.getTopInventory();
-            if(top.getHolder() instanceof Gui) {
+            if(top.getHolder() instanceof dev.triumphteam.gui.guis.BaseGui) {
                 player.closeInventory();
             }
         }

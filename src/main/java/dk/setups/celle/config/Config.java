@@ -126,8 +126,8 @@ public class Config extends OkaeriConfig {
             "Hvor lang tid skal der gå, før skiltene opdateres?",
             "Dette er i ticks, så 20 ticks er 1 sekund.",
             "",
-            "Det koster overraskende lidt at opdatere skilte, da det bliver gjort smart, så tøv ikke med at sæt det lavt. Derudover bliver det kørt async.",
-            "Dette påvirker IKKE hvornår cellerne udløber."
+            "Skilte og udløb opdateres sikkert på serverens hovedtråd.",
+            "Dette styrer også hvor ofte udløbne celler kontrolleres."
     })
     private int updateSignsDelayTick = 20;
 

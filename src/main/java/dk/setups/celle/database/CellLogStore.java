@@ -5,16 +5,12 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import dk.setups.celle.cell.log.CellLog;
 import dk.setups.celle.cell.log.CellLogFilter;
-import org.bukkit.Bukkit;
 
-import javax.swing.plaf.basic.BasicButtonUI;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class CellLogStore extends BaseStore<Integer, CellLog> {
 
@@ -25,23 +21,22 @@ public class CellLogStore extends BaseStore<Integer, CellLog> {
     public List<CellLog> getLogs(CellLogFilter filter, int limit, int skip) {
         try {
             QueryBuilder<CellLog, Integer> query = getDao().queryBuilder();
-            if(filter.getUser() != null) {
-                Where<?, ?> where = query.where().eq("actor_id", filter.getUser().getId());
-                if(filter.isTargetOrUser()) {
-                    where.or().eq("target_id", filter.getUser().getId());
+            if (filter.getUser() != null || filter.getTarget() != null || filter.getCell() != null || filter.getAction() != null) {
+                Where<CellLog, Integer> where = query.where();
+                int count = 0;
+                if (filter.getUser() != null) {
+                    where.eq("actor_id", filter.getUser().getId());
+                    if (filter.isTargetOrUser()) { where.eq("target_id", filter.getUser().getId()); where.or(2); }
+                    count++;
                 }
-            }
-            if(filter.getTarget() != null) {
-                Where<?, ?> where = query.where().eq("target_id", filter.getTarget().getId());
-                if(filter.isTargetOrUser()) {
-                    where.or().eq("actor_id", filter.getTarget().getId());
+                if (filter.getTarget() != null) {
+                    where.eq("target_id", filter.getTarget().getId());
+                    if (filter.isTargetOrUser()) { where.eq("actor_id", filter.getTarget().getId()); where.or(2); }
+                    count++;
                 }
-            }
-            if(filter.getCell() != null) {
-                query.where().eq("cell_id", filter.getCell().getId());
-            }
-            if(filter.getAction() != null) {
-                query.where().eq("action", filter.getAction());
+                if (filter.getCell() != null) { where.eq("cell_id", filter.getCell().getId()); count++; }
+                if (filter.getAction() != null) { where.eq("action", filter.getAction()); count++; }
+                if (count > 1) where.and(count);
             }
 
             query.orderBy("id", false);

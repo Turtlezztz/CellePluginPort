@@ -22,32 +22,32 @@ public class LogListener implements Listener {
 
     private @Inject StoreManager stores;
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellRentEvent(CellRentEvent event) {
         log(LoggableAction.RENT, event.getCell(), event.getUser());
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellUnrentEvent(CellUnrentEvent event) {
         log(LoggableAction.UNRENT, event.getCell(), event.getUser());
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellExpireEvent(CellExpireEvent event) {
         log(LoggableAction.EXPIRE, event.getCell());
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellExtendEvent(CellExtendEvent event) {
         log(LoggableAction.EXTEND, event.getCell(), event.getUser());
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellAddMemberEvent(CellAddMemberEvent event) {
         log(LoggableAction.MEMBER_ADD, event.getCell(), event.getUser(), event.getTarget());
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
     public void onCellRemoveMemberEvent(CellRemoveMemberEvent event) {
         log(LoggableAction.MEMBER_REMOVE, event.getCell(), event.getUser(), event.getTarget());
     }

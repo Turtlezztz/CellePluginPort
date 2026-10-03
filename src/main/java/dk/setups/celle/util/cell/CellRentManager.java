@@ -1,128 +1,77 @@
 package dk.setups.celle.util.cell;
 
 import dk.setups.celle.cell.Cell;
-import dk.setups.celle.cell.CellUser;
 import dk.setups.celle.config.LangConfig;
 import dk.setups.celle.database.StoreManager;
 import dk.setups.celle.util.VaultUtils;
 import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.platform.bukkit.i18n.BI18n;
 import eu.okaeri.platform.core.annotation.Component;
-import eu.okaeri.tasker.core.Tasker;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Date;
-
+/** Runs as one server-thread operation so a second click cannot race a payment. */
 @Component
 public class CellRentManager {
-
     private @Inject("lang") BI18n i18n;
     private @Inject LangConfig lang;
     private @Inject StoreManager stores;
-    private @Inject Tasker tasker;
     private @Inject CellUtils utils;
     private @Inject CellAPI api;
     private @Inject VaultUtils vault;
-    private @Inject StoreManager store;
 
-
-    public void handleCellUse(Player player, Cell cell) {
-        if(cell.isRented() && cell.getOwner().getUuid().equals(player.getUniqueId())) {
-            attemptExtendCell(player, cell);
-            return;
-        }
-        attemptRentCell(player, cell);
+    public void handleCellUse(Player player, Cell requested) {
+        Cell cell = stores.getCellStore().get(requested.getId()).orElse(null);
+        if (cell == null) return;
+        if (cell.isOwner(player.getUniqueId())) attemptExtendCell(player, cell);
+        else attemptRentCell(player, cell);
     }
 
     public void attemptRentCell(Player player, Cell cell) {
-        tasker.newChain()
-                .abortIfSyncNot(() -> {
-                    if(cell.isRented()) {
-                        i18n.get(lang.getCellAttemptRentAlreadyRented()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .abortIfSyncNot(() -> {
-                    if(!player.hasPermission(cell.getGroup().getRentPermission())
-                        && !player.hasPermission(cell.getRentPermission())) {
-                        i18n.get(lang.getCellAttemptRentNoPermission()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .abortIfAsyncNot(() -> {
-                    if(utils.hasRentedMax(player, cell.getGroup())) {
-                            i18n.get(lang.getCellAttemptRentMaxRented()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .abortIfSyncNot(() -> {
-                    if(!vault.tryTakeMoney(player, cell.getGroup().getRentPrice())) {
-                        i18n.get(lang.getCellAttemptRentNotEnoughMoney()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .async(() -> {
-                    EventSuccess success = api.rentCell(cell, stores.getUserStore().get(player));
-                    if(success == EventSuccess.FAILED) {
-                        vault.addMoney(player, cell.getGroup().getRentPrice());
-                        i18n.get(lang.getCellAttemptRentAlreadyRented())
-                                .with("cell", cell.getName())
-                                .with("group", cell.getGroup().getName())
-                                .sendTo(player);
-                        return;
-                    }
-                    if(success == EventSuccess.CANCELLED) {
-                        vault.addMoney(player, cell.getGroup().getRentPrice());
-                        return;
-                    }
-                    i18n.get(lang.getCellAttemptRentSuccess()).with("cell", cell).sendTo(player);
-                    utils.update(store.getCellStore().get(cell.getId()).orElse(cell));
-                }).execute();
+        if (cell.isRented()) { message(player, cell, lang.getCellAttemptRentAlreadyRented()); return; }
+        // Clean up a stale lease before assigning it to someone else.
+        if (cell.getRentedUntil() != null) api.expireCell(cell);
+        if (!player.hasPermission(cell.getGroup().getRentPermission()) && !player.hasPermission(cell.getRentPermission())) {
+            message(player, cell, lang.getCellAttemptRentNoPermission()); return;
+        }
+        if (utils.hasRentedMax(player, cell.getGroup())) { message(player, cell, lang.getCellAttemptRentMaxRented()); return; }
+        double price = cell.getGroup().getRentPrice();
+        if (!vault.tryTakeMoney(player, price)) { message(player, cell, lang.getCellAttemptRentNotEnoughMoney()); return; }
+        EventSuccess result;
+        try {
+            result = api.rentCell(cell, stores.getUserStore().get(player));
+        } catch (RuntimeException failure) {
+            vault.addMoney(player, price);
+            throw failure;
+        }
+        if (result != EventSuccess.SUCCESS) {
+            vault.addMoney(player, price);
+            if (result == EventSuccess.FAILED) message(player, cell, lang.getCellAttemptRentAlreadyRented());
+            return;
+        }
+        message(player, cell, lang.getCellAttemptRentSuccess());
     }
 
     public void attemptExtendCell(Player player, Cell cell) {
-        tasker.newChain()
-                .abortIfSyncNot(() -> {
-                     if(cell.getOwner().getUuid().equals(player.getUniqueId()) && cell.isRented()) {
-                         return true;
-                     }
-                     i18n.get(lang.getCellAttemptExtendNotOwned()).with("cell", cell).sendTo(player);
-                     return false;
-                })
-                .abortIfSyncNot(() -> {
-                    if(player.hasPermission(cell.getGroup().getRentPermission())
-                        || player.hasPermission(cell.getRentPermission())
-                        || player.hasPermission(cell.getGroup().getExtendPermission())) {
-                        return true;
-                    }
-                    i18n.get(lang.getCellAttemptExtendNoPermission()).with("cell", cell).sendTo(player);
-                    return false;
-                })
-                .abortIfAsyncNot(() -> {
-                    if(!cell.canExtend()) {
-                        i18n.get(lang.getCellAttemptExtendFullyExtended()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .abortIfSyncNot(() -> {
-                    if(!vault.tryTakeMoney(player, cell.getGroup().getRentPrice())) {
-                        i18n.get(lang.getCellAttemptExtendNotEnoughMoney()).with("cell", cell).sendTo(player);
-                        return false;
-                    }
-                    return true;
-                })
-                .async(() -> {
-                    if(api.extendCell(cell, stores.getUserStore().get(player)) == EventSuccess.CANCELLED) {
-                        vault.addMoney(player, cell.getGroup().getRentPrice());
-                        return;
-                    }
-                    i18n.get(lang.getCellAttemptExtendSuccess()).with("cell", cell).sendTo(player);
-                }).execute();
+        if (!cell.isOwner(player.getUniqueId())) { message(player, cell, lang.getCellAttemptExtendNotOwned()); return; }
+        if (!player.hasPermission(cell.getGroup().getRentPermission()) && !player.hasPermission(cell.getRentPermission())
+                && !player.hasPermission(cell.getGroup().getExtendPermission())) {
+            message(player, cell, lang.getCellAttemptExtendNoPermission()); return;
+        }
+        if (!cell.canExtend()) { message(player, cell, lang.getCellAttemptExtendFullyExtended()); return; }
+        double price = cell.getGroup().getRentPrice();
+        if (!vault.tryTakeMoney(player, price)) { message(player, cell, lang.getCellAttemptExtendNotEnoughMoney()); return; }
+        EventSuccess result;
+        try {
+            result = api.extendCell(cell, stores.getUserStore().get(player));
+        } catch (RuntimeException failure) {
+            vault.addMoney(player, price);
+            throw failure;
+        }
+        if (result != EventSuccess.SUCCESS) { vault.addMoney(player, price); return; }
+        message(player, cell, lang.getCellAttemptExtendSuccess());
+    }
+
+    private void message(Player player, Cell cell, String text) {
+        i18n.get(text).with("cell", cell).sendTo(player);
     }
 }

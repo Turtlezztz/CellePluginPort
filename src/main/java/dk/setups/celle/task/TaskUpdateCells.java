@@ -7,68 +7,35 @@ import dk.setups.celle.util.cell.CellUtils;
 import dk.setups.celle.util.NearbyPlayerMap;
 import dk.setups.celle.util.PlayerSignDisallow;
 import eu.okaeri.injector.annotation.Inject;
-import eu.okaeri.injector.annotation.PostConstruct;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.logging.Level;
 
+/** All cell mutations and player/world access are serialized on Paper's server thread. */
 public class TaskUpdateCells extends BukkitRunnable {
-
     private @Inject StoreManager stores;
     private @Inject CellUtils utils;
     private @Inject Plugin plugin;
     private @Inject PlayerSignDisallow disallow;
     private @Inject CellAPI api;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(4);
-
-    private final Set<Integer> rentedCellIds = new HashSet<>();
-
-    public TaskUpdateCells() {
-    }
-
-    @PostConstruct
-    public void initRentedIds() {
-        stores.getCellStore().getCache().getAll().stream()
-                .filter(Cell::isRented)
-                .forEach(cell -> rentedCellIds.add(cell.getId()));
-    }
-
     @Override
     public void run() {
-        if(!plugin.isEnabled()) {
-            cancel();
-            return;
-        }
+        if (!plugin.isEnabled()) { cancel(); return; }
         NearbyPlayerMap nearby = NearbyPlayerMap.from(disallow.filter(Bukkit.getOnlinePlayers()));
-        for(Cell cell : stores.getCellStore().getCache().getAll()) {
-            executor.submit(() -> updateSet(cell));
-
-            if(cell.getSign() == null) {
-                continue;
+        for (Cell cached : stores.getCellStore().getCache().getAll()) {
+            try {
+                if (cached.getRentedUntil() != null && !cached.isRented()) {
+                    Cell cell = stores.getCellStore().get(cached.getId()).orElse(null);
+                    if (cell != null && cell.getRentedUntil() != null && !cell.isRented()) api.expireCell(cell);
+                } else if (cached.getSign() != null) {
+                    utils.updateSign(nearby, cached);
+                }
+            } catch (Exception exception) {
+                plugin.getLogger().log(Level.SEVERE, "Failed to update cell " + cached.getName(), exception);
             }
-            utils.updateSign(nearby, cell);
-        }
-    }
-
-    protected void updateSet(Cell cached) {
-        if(!cached.isRented() && rentedCellIds.contains(cached.getId())) {
-            Cell cell = stores.getCellStore().get(cached.getId()).orElseThrow(() -> new IllegalStateException("Cell not found"));
-
-            if(!cell.isRented()) {
-                rentedCellIds.remove(cell.getId());
-                api.expireCell(cell);
-
-                utils.update(cell);
-            }
-        }
-        if(cached.isRented()) {
-            rentedCellIds.add(cached.getId());
         }
     }
 }

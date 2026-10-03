@@ -178,9 +178,9 @@ public class LangConfig extends LocaleConfig {
     private String commandCeaGroupSetSignLineNotCorrectState = "&cDu kan bruge følgende tilstande: &4unrented, rented-non-member, rented-member, rented-owner&c.";
     private String commandCeaGroupSetSignLineSuccess = "§aLinje &2{line} &aaf skiltet for gruppen &2{group.name} &aer blevet sat til &2{text}&a.";
 
-    private String commandCeaGroupSetRentPriceAlias = "group set permission * *";
+    private String commandCeaGroupSetRentPriceAlias = "group set price * *";
     private String commandCeaGroupSetRentPriceDescription = "Sætter prisen for at leje en celle i en gruppe.";
-    private String commandCeaGroupSetRentPriceUsage = "cea set group permission <gruppe> <pris>";
+    private String commandCeaGroupSetRentPriceUsage = "cea group set price <gruppe> <pris>";
     private String commandCeaGroupSetRentPriceSuccess = "§aPrisen for at leje en celle i gruppen &2{group.name} &aer blevet sat til &2{price}&a.";
 
     private String commandCeaGroupSetMaxRentTimeAlias = "group set maxrenttime * *";

@@ -14,7 +14,7 @@ import org.bukkit.OfflinePlayer;
 import java.util.Date;
 import java.util.UUID;
 
-@Getter @Setter @ToString
+@Getter @Setter @ToString(exclude = "members")
 @EqualsAndHashCode(exclude = "members", callSuper = false)
 @DatabaseTable(tableName = Cell.TABLE_NAME)
 public class Cell {
@@ -50,14 +50,15 @@ public class Cell {
         this.owner = owner;
         this.rentedUntil = until;
 
-        members.clear();
+        clearMembers();
     }
 
     public boolean isRented() {
-        return rentedUntil != null && rentedUntil.after(new Date());
+        return owner != null && rentedUntil != null && rentedUntil.after(new Date());
     }
 
     public void extend() {
+        if (!isRented()) throw new IllegalStateException("Cell is not rented");
         this.rentedUntil = getExpireIfExtended();
     }
 
@@ -119,16 +120,16 @@ public class Cell {
     }
 
     public boolean canExtend() {
-        return  rentedUntil == null
-                || group.getMaxRentTimeMillis() > getExpireIfExtended().getTime() - System.currentTimeMillis();
+        return isRented() && group.getRentTimeMillis() > 0
+                && group.getMaxRentTimeMillis() >= getExpireIfExtended().getTime() - System.currentTimeMillis();
     }
 
     public long getTimeLeftMs() {
-        return rentedUntil.getTime() - System.currentTimeMillis();
+        return rentedUntil == null ? 0 : Math.max(0, rentedUntil.getTime() - System.currentTimeMillis());
     }
 
     public Date getExpireIfExtended() {
-        return new Date(rentedUntil.getTime() + group.getRentTimeMillis());
+        return new Date(Math.addExact(rentedUntil == null ? System.currentTimeMillis() : rentedUntil.getTime(), group.getRentTimeMillis()));
     }
 
     Cell() {

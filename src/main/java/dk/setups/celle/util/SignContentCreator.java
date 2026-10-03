@@ -11,7 +11,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @SuppressWarnings("unused")
@@ -37,16 +36,7 @@ public class SignContentCreator {
         } else {
             content = getUnrentedContent(cell, target);
         }
-        return limitLength(content);
-    }
-
-    private String[] limitLength(String[] lines) {
-        for (int i = 0; i < lines.length; i++) {
-            if (lines[i].length() > 15) {
-                lines[i] = lines[i].substring(0, 15);
-            }
-        }
-        return lines;
+        return content;
     }
 
     private String[] getOwnerContent(Cell cell, Player target) {
@@ -85,9 +75,9 @@ public class SignContentCreator {
 
 
     private CompiledMessage[] compile(List<String> strings) {
-        CompiledMessage[] messages = new CompiledMessage[strings.size()];
-        for (int i = 0; i < strings.size(); i++) {
-            messages[i] = CompiledMessage.of(ChatColor.translateAlternateColorCodes('&', strings.get(i)));
+        CompiledMessage[] messages = new CompiledMessage[4];
+        for (int i = 0; i < 4; i++) {
+            messages[i] = CompiledMessage.of(ChatColor.translateAlternateColorCodes('&', i < strings.size() ? strings.get(i) : ""));
         }
         return messages;
     }

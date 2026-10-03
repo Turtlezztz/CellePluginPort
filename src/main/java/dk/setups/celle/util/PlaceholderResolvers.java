@@ -5,9 +5,7 @@ import dk.setups.celle.cell.*;
 import dk.setups.celle.cell.log.CellLog;
 import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.placeholders.Placeholders;
-import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;

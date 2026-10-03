@@ -43,7 +43,7 @@ public class CommandTextHandler extends I18nCommandsTextHandler {
             String value = lang.get(key, String.class);
             if(isValid(value, key)) {
                 text = text.replace("#{" + key + "}", value);
-                break;
+
             }
         }
 
@@ -54,7 +54,7 @@ public class CommandTextHandler extends I18nCommandsTextHandler {
         if (!text.contains("#") && !text.contains("$")) {
             return Collections.emptySet();
         } else {
-            Set<String> keys = new HashSet();
+            Set<String> keys = new HashSet<>();
             Matcher matcher = pattern.matcher(text);
 
             while(matcher.find()) {

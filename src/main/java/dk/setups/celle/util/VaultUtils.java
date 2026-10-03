@@ -36,13 +36,17 @@ public class VaultUtils {
     }
 
     public boolean tryTakeMoney(Player player, double amount) {
-        if(economy.getBalance(player) < amount) {
+        if (!Double.isFinite(amount) || amount < 0) throw new IllegalArgumentException("Invalid rent price");
+        if(economy == null || economy.getBalance(player) < amount) {
             return false;
         }
         return economy.withdrawPlayer(player, amount).transactionSuccess();
     }
 
     public void addMoney(Player player, double amount) {
-        economy.depositPlayer(player, amount);
+        if (!Double.isFinite(amount) || amount < 0) throw new IllegalArgumentException("Invalid refund amount");
+        if (economy == null || !economy.depositPlayer(player, amount).transactionSuccess()) {
+            throw new IllegalStateException("Economy refund failed for " + player.getUniqueId() + ": " + amount);
+        }
     }
 }

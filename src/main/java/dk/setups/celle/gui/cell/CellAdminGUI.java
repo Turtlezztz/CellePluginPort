@@ -17,7 +17,6 @@ import eu.okaeri.configs.yaml.snakeyaml.YamlSnakeYamlConfigurer;
 import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.platform.core.annotation.Configuration;
 import lombok.Getter;
-import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -35,11 +34,11 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
     private int rows = 6;
     private LinkedHashMap<String, ConfigGUIItem> items = new ItemMapBuilder()
             .addItem("decoration", new ConfigGuiItemBuilder()
-                    .setItem(new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15))
+                    .setItem(new ItemStack(Material.BLACK_STAINED_GLASS_PANE))
                     .setSlots(IntStream.range(0, 9), IntStream.range(45, 54))
                     .build())
             .addItem("decoration2", new ConfigGuiItemBuilder()
-                    .setItem(new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 7))
+                    .setItem(new ItemStack(Material.GRAY_STAINED_GLASS_PANE))
                     .setSlots(IntStream.range(9, 45))
                     .build())
             .addItem("delete", new ConfigGuiItemBuilder()
@@ -59,7 +58,7 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                     .setSlot(2, 4)
                     .build())
             .addItem("extend", new ConfigGuiItemBuilder()
-                    .setItem(ItemBuilder.from(Material.SIGN)
+                    .setItem(ItemBuilder.from(Material.OAK_SIGN)
                             .setName("§6§lFORLÆNG")
                             .setLore("",
                                     " §7§l» §aTryk for at forlænge §2{cell.name}§a.")
@@ -68,7 +67,7 @@ public class CellAdminGUI extends ConfigurableGUI<CellGUIState> {
                     .setSlot(2, 7)
                     .build())
             .addItem("info", new ConfigGuiItemBuilder()
-                    .setItem(ItemBuilder.from(Material.BOOK_AND_QUILL)
+                    .setItem(ItemBuilder.from(Material.WRITABLE_BOOK)
                             .setName("§6§lINFO")
                             .setLore("§6§lINFORMATION",
                                     "",

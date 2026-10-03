@@ -28,6 +28,10 @@ public class CellSignStore extends BaseStore<Integer, CellSign> {
                 return false;
             }
 
+            for (var cell : getStores().getCellStore().getAll("sign_id", sign.getId())) {
+                cell.setSign(null);
+                getStores().getCellStore().persist(cell);
+            }
             getDao().delete(sign);
         } catch (Exception exception) {
             getLogger().severe("Failed to delete sign at " + x + ", " + y + ", " + z + " in world " + world);

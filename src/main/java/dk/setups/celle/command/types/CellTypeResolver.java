@@ -1,6 +1,5 @@
 package dk.setups.celle.command.types;
 
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import dk.setups.celle.cell.Cell;
 import dk.setups.celle.database.StoreManager;
 import dk.setups.celle.util.WorldGuardUtils;
@@ -10,10 +9,7 @@ import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.resolver.BasicTypeResolver;
 import eu.okaeri.injector.annotation.Inject;
 import lombok.NonNull;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
-import java.util.Optional;
 
 public class CellTypeResolver extends BasicTypeResolver<Cell> {
 

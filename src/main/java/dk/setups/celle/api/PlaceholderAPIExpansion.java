@@ -7,7 +7,6 @@ import dk.setups.celle.database.CellGroupStore;
 import dk.setups.celle.database.CellStore;
 import dk.setups.celle.database.UserStore;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +31,12 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
 
     @Override
     public @NotNull String getAuthor() {
-        return "skibdi";
+        return "AbdisKiosk";
     }
 
     @Override
     public @NotNull String getVersion() {
-        return "1.0.0";
+        return "2.0.0";
     }
 
     @Override
@@ -49,13 +48,14 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
     public String onPlaceholderRequest(Player player, String params) {
         if(player != null) {
             if(params.equals("owned")) {
-                return cellStore.getOwnedCells(userStore.get(player)).stream()
+                return cellStore.getCache().getAll().stream()
+                        .filter(cell -> cell.isOwner(player.getUniqueId()))
                         .map(Cell::getName)
                         .collect(Collectors.joining(","));
             }
         }
 
-        String[] splitParams = params.split("_");
+        String[] splitParams = params.split("_", 2);
         if(splitParams.length != 2) {
             return null;
         }
@@ -70,7 +70,8 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
             return null;
         }
 
-        return group.getCells().stream()
+        return cellStore.getCache().getAll().stream()
+                .filter(cell -> cell.getGroup().getId() == group.getId())
                 .filter(cell -> !arg.equals("available") || !cell.isRented())
                 .map(Cell::getName)
                 .collect(Collectors.joining(","));

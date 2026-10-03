@@ -1,42 +1,36 @@
-package dk.setups.celle.util;  import org.bukkit.Location; import org.bukkit.entity.Player;
+package dk.setups.celle.util;
 
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import java.util.*;
 
+/** A snapshot of players by world and chunk, built on the server thread. */
 public class NearbyPlayerMap {
-
-    private final Map<Long, Collection<Player>> chunkToPlayer = new HashMap<>();
-
-    public NearbyPlayerMap() {}
+    private record WorldChunk(UUID world, long chunk) {}
+    private final Map<WorldChunk, Collection<Player>> chunkToPlayer = new HashMap<>();
 
     public static NearbyPlayerMap from(Collection<? extends Player> players) {
         NearbyPlayerMap map = new NearbyPlayerMap();
         players.forEach(map::add);
         return map;
     }
-
     public void add(Player player) {
-        chunkToPlayer.compute(ChunkUtils.toLong(player.getLocation()), (k, v) -> {
-            if (v == null) {
-                v = new HashSet<>();
-            }
-            v.add(player);
-            return v;
-        });
+        Location location = player.getLocation();
+        if (location.getWorld() == null) return;
+        WorldChunk key = new WorldChunk(location.getWorld().getUID(), ChunkUtils.toLong(location));
+        chunkToPlayer.computeIfAbsent(key, ignored -> new HashSet<>()).add(player);
     }
-
-
     public Collection<? extends Player> getNearbyPlayers(Location location) {
-        int CHUNK_VIEW_DISTANCE = 2;
-        int chunkX = ChunkUtils.asChunkX(location.getBlockX());
-        int chunkZ = ChunkUtils.asChunkY(location.getBlockZ());
-
-        Collection<Player> players = new HashSet<>();
-        for(int x = chunkX - CHUNK_VIEW_DISTANCE; x <= chunkX + CHUNK_VIEW_DISTANCE; x++) {
-            for(int z = chunkZ - CHUNK_VIEW_DISTANCE; z <= chunkZ + CHUNK_VIEW_DISTANCE; z++) {
-                players.addAll(chunkToPlayer.getOrDefault(ChunkUtils.toLong(x, z), Collections.emptySet()));
+        if (location.getWorld() == null) return List.of();
+        int chunkX = location.getBlockX() >> 4;
+        int chunkZ = location.getBlockZ() >> 4;
+        Set<Player> players = new HashSet<>();
+        for (int x = chunkX - 2; x <= chunkX + 2; x++) {
+            for (int z = chunkZ - 2; z <= chunkZ + 2; z++) {
+                var key = new WorldChunk(location.getWorld().getUID(), ChunkUtils.toLong(x, z));
+                players.addAll(chunkToPlayer.getOrDefault(key, List.of()));
             }
         }
-
         return players;
     }
 }

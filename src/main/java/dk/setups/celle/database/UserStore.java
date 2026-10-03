@@ -17,6 +17,7 @@ public class UserStore extends BaseStore<Integer, CellUser> {
 
     public void update(OfflinePlayer player) {
         get("mc_uuid", player.getUniqueId()).ifPresent(user -> {
+            if (player.getName() == null) return;
             user.setName(player.getName());
             persist(user);
         });
@@ -44,7 +45,7 @@ public class UserStore extends BaseStore<Integer, CellUser> {
 
     public CellUser get(UUID uuid, String name) {
         return get("mc_uuid", uuid).orElseGet(() -> {
-            CellUser user = new CellUser(uuid, name);
+            CellUser user = new CellUser(uuid, name == null ? uuid.toString() : name);
             persist(user);
             return user;
         });

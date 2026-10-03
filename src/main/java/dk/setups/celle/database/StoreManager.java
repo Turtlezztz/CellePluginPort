@@ -16,6 +16,8 @@ import eu.okaeri.injector.annotation.PostConstruct;
 import eu.okaeri.platform.core.annotation.Component;
 import lombok.Getter;
 
+import org.bukkit.plugin.Plugin;
+import java.nio.file.Files;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -49,16 +51,16 @@ public class StoreManager {
 
     private ConnectionSource connectionSource;
 
-    public StoreManager(ConnectionSource source) throws SQLException {
-        connectionSource = source;
+    public StoreManager() {
     }
 
     @PostConstruct
-    public void init(Logger logger) throws Exception {
+    public void init(Logger logger, Plugin plugin) throws Exception {
         com.j256.ormlite.logger.Logger.setGlobalLogLevel(Level.ERROR);
         LoggerFactory.setLogBackendType(LogBackendType.JAVA_UTIL);
         try {
-            connectionSource = new JdbcConnectionSource("jdbc:sqlite:" + "plugins/Celler/cell.db");
+            Files.createDirectories(plugin.getDataFolder().toPath());
+            connectionSource = new JdbcConnectionSource("jdbc:sqlite:" + plugin.getDataFolder().toPath().resolve("cell.db").toAbsolutePath());
 
             Set<String> tableNames = getCreatedTables();
             if (!tableNames.contains(CellUser.TABLE_NAME)) {
@@ -118,27 +120,33 @@ public class StoreManager {
     }
 
     private Set<String> getCreatedTables() throws SQLException {
-        DatabaseMetaData metaData = connectionSource.getReadWriteConnection("").getUnderlyingConnection().getMetaData();
-        ResultSet tables = metaData.getTables(null, null, "%", null);
-
-        // Create a Set to hold table names
-        Set<String> tableNames = new HashSet<>();
-
-        while (tables.next()) {
-            tableNames.add(tables.getString(3).toLowerCase());
+        var connection = connectionSource.getReadWriteConnection("");
+        try {
+            DatabaseMetaData metaData = connection.getUnderlyingConnection().getMetaData();
+            Set<String> names = new HashSet<>();
+            try (ResultSet tables = metaData.getTables(null, null, "%", null)) {
+                while (tables.next()) names.add(tables.getString(3).toLowerCase(java.util.Locale.ROOT));
+            }
+            return names;
+        } finally {
+            connectionSource.releaseConnection(connection);
         }
-
-        return tableNames;
     }
 
     private static boolean isSqlite(String jdbc) {
         return jdbc.startsWith("jdbc:sqlite:");
     }
 
+    public <T> T transaction(java.util.concurrent.Callable<T> task) {
+        try {
+            return com.j256.ormlite.misc.TransactionManager.callInTransaction(connectionSource, task);
+        } catch (SQLException exception) {
+            throw new IllegalStateException("Database transaction failed", exception);
+        }
+    }
+
     public void disconnect() throws Exception {
-        this.cellStore = null;
-        this.userStore = null;
-        connectionSource.close();
+        if (connectionSource != null) connectionSource.close();
     }
 
 }

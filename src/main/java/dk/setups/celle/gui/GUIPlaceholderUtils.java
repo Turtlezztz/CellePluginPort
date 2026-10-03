@@ -1,6 +1,5 @@
 package dk.setups.celle.gui;
 
-import dev.triumphteam.gui.builder.item.ItemBuilder;
 import dk.setups.celle.gui.state.GUIState;
 import dk.setups.celle.gui.state.GUIStatePlaceholderUtils;
 import eu.okaeri.i18n.minecraft.adventure.AdventureMessage;
@@ -14,7 +13,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -42,15 +40,13 @@ public class GUIPlaceholderUtils {
     }
 
     public ItemStack withPlaceholders(Map<String, Object> placeholders, ItemStack item) {
-        ItemMeta meta =  item.getItemMeta();
-        ItemBuilder builder = ItemBuilder.from(item);
-        if(meta.hasDisplayName()) {
-            builder.name(withPlaceholders(placeholders, meta.getDisplayName()));
-        }
-        if(meta.hasLore()) {
-            builder.lore(withPlaceholders(placeholders, meta.getLore()));
-        }
-        return builder.build();
+        ItemStack result = item.clone();
+        ItemMeta meta = result.getItemMeta();
+        if (meta == null) return result;
+        if (meta.hasDisplayName()) meta.displayName(withPlaceholders(placeholders, meta.getDisplayName()));
+        if (meta.hasLore()) meta.lore(withPlaceholders(placeholders, meta.getLore()));
+        result.setItemMeta(meta);
+        return result;
     }
 
     public List<net.kyori.adventure.text.Component> withPlaceholders(Map<String, Object> placeholders, List<String> text) {

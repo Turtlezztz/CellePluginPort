@@ -1,18 +1,16 @@
 package dk.setups.celle.util;
 
+import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.domains.DefaultDomain;
-import com.sk89q.worldguard.protection.flags.DefaultFlag;
-import com.sk89q.worldguard.protection.flags.RegionGroup;
-import com.sk89q.worldguard.protection.flags.RegionGroupFlag;
-import com.sk89q.worldguard.protection.flags.StateFlag;
+import com.sk89q.worldguard.protection.flags.*;
+import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import dk.setups.celle.cell.Cell;
 import dk.setups.celle.cell.CellRegion;
-import dk.setups.celle.config.Config;
-import eu.okaeri.injector.annotation.Inject;
 import eu.okaeri.platform.core.annotation.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -20,136 +18,85 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 
-import java.util.Collection;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Component
 public class WorldGuardUtils {
-
-    private @Inject Config config;
-
-    public ProtectedRegion create(String name, CuboidRegion region) throws IllegalArgumentException {
-        World world = Bukkit.getWorld(region.getWorld().getName());
-        if(getRegionByName(world, name).isPresent()) {
-            throw new IllegalArgumentException("Region already exists");
-        }
-
-        ProtectedCuboidRegion protectedRegion = new ProtectedCuboidRegion(name,
-                region.getMinimumPoint().toBlockPoint(), region.getMaximumPoint().toBlockPoint());
-
-        WorldGuardPlugin.inst().getRegionManager(world).addRegion(protectedRegion);
-        return protectedRegion;
+    private RegionManager manager(World world) {
+        if (world == null) throw new IllegalArgumentException("World is not loaded");
+        RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
+        if (manager == null) throw new IllegalArgumentException("WorldGuard regions unavailable in " + world.getName());
+        return manager;
     }
 
-    public void delete(CellRegion region) {
-        WorldGuardPlugin.inst()
-                .getRegionManager(Bukkit.getWorld(region.getRegionWorld())).removeRegion(region.getName());
-    }
-
-    public Set<ProtectedRegion> getRegionsAt(Location location) {
-        return WorldGuardPlugin.inst()
-                .getRegionManager(location.getWorld())
-                .getApplicableRegions(location)
-                .getRegions();
-    }
-
-    public Collection<ProtectedRegion> getRegionsIn(World world, ProtectedRegion region) {
-        if(region.getId().equals("__global__")) {
-            return WorldGuardPlugin.inst()
-                    .getRegionManager(world)
-                    .getRegions()
-                    .values();
-        }
-
-         Collection<ProtectedRegion> all = WorldGuardPlugin.inst()
-                .getRegionManager(world)
-                .getRegions()
-                .values();
-
-         return region.getIntersectingRegions(all);
-    }
-
-    public Optional<ProtectedRegion> getRegionByName(World world, String name) {
-        return Optional.ofNullable(WorldGuardPlugin.inst()
-                .getRegionManager(world)
-                .getRegion(name));
-    }
-
-    public void updateRegion(Cell cell) throws IllegalArgumentException {
-        ProtectedRegion region = getRegion(cell.getRegion());
-
-        updatePermissions(cell, region);
-        updateFlags(region);
-    }
-
-    private ProtectedRegion getRegion(CellRegion cellRegion) throws IllegalArgumentException {
-        ProtectedRegion region = WorldGuardPlugin.inst()
-                .getRegionManager(Bukkit.getWorld(cellRegion.getRegionWorld()))
-                .getRegion(cellRegion.getName());
-
-        if(region == null) {
-            throw new IllegalArgumentException("Region not found");
-        }
-
+    public ProtectedRegion create(String name, CuboidRegion selection) {
+        if (selection.getWorld() == null) throw new IllegalArgumentException("Selection has no world");
+        RegionManager manager = manager(Bukkit.getWorld(selection.getWorld().getName()));
+        if (manager.hasRegion(name)) throw new IllegalArgumentException("Region already exists");
+        ProtectedRegion region = new ProtectedCuboidRegion(name, selection.getMinimumPoint(), selection.getMaximumPoint());
+        manager.addRegion(region);
         return region;
     }
 
-    private void updatePermissions(Cell cell, ProtectedRegion region) {
-        DefaultDomain members = new DefaultDomain();
+    public void delete(CellRegion region) {
+        manager(Bukkit.getWorld(region.getRegionWorld())).removeRegion(region.getName());
+    }
+
+    public Set<ProtectedRegion> getRegionsAt(Location location) {
+        if (location.getWorld() == null) return Collections.emptySet();
+        RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(location.getWorld()));
+        return manager == null ? Collections.emptySet() : manager.getApplicableRegions(BukkitAdapter.asBlockVector(location)).getRegions();
+    }
+
+    public Collection<ProtectedRegion> getRegionsIn(World world, ProtectedRegion region) {
+        Collection<ProtectedRegion> regions = manager(world).getRegions().values();
+        return region.getId().equals("__global__") ? regions : region.getIntersectingRegions(regions);
+    }
+
+    public Optional<ProtectedRegion> getRegionByName(World world, String name) {
+        if (world == null) return Optional.empty();
+        RegionManager manager = WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
+        return manager == null ? Optional.empty() : Optional.ofNullable(manager.getRegion(name));
+    }
+
+    public void updateRegion(Cell cell) {
+        ProtectedRegion region = getRegionByName(Bukkit.getWorld(cell.getRegion().getRegionWorld()), cell.getRegion().getName())
+                .orElseThrow(() -> new IllegalArgumentException("Region not found for cell " + cell.getName()));
         DefaultDomain owners = new DefaultDomain();
-
-        members.clear();
-        owners.clear();
-
-        if(cell.isRented()) {
-            cell.getMembers().forEach(member -> owners.addPlayer(member.getUser().getUuid()));
+        DefaultDomain members = new DefaultDomain();
+        if (cell.isRented() && cell.getOwner() != null) {
             owners.addPlayer(cell.getOwner().getUuid());
+            if (cell.getMembers() != null) cell.getMembers().forEach(member -> owners.addPlayer(member.getUser().getUuid()));
         }
-
         owners.addGroup("cell.build");
         members.addGroup("cell.interact");
-
-        region.setMembers(members);
         region.setOwners(owners);
-
-        region.getFlags().clear();
-
+        region.setMembers(members);
         region.setPriority(5);
+        // Only replace flags managed by Celler; preserve unrelated administrator flags.
+        region.setFlag(Flags.WATER_FLOW, StateFlag.State.DENY);
+        setGroupFlag(region, Flags.USE, RegionGroup.MEMBERS);
+        setGroupFlag(region, Flags.INTERACT, RegionGroup.MEMBERS);
+        setGroupFlag(region, Flags.CHEST_ACCESS, RegionGroup.MEMBERS);
+        setGroupFlag(region, Flags.BLOCK_PLACE, RegionGroup.OWNERS);
+        setGroupFlag(region, Flags.BLOCK_BREAK, RegionGroup.OWNERS);
+        // WorldGuard's BUILD flag has no region group. Its normal ownership check protects building.
+        region.setFlag(Flags.BUILD, null);
     }
 
-    private void updateFlags(ProtectedRegion region) {
-        region.setFlag(DefaultFlag.WATER_FLOW, StateFlag.State.DENY);
-
-        setMembersFlag(region, DefaultFlag.USE);
-        setMembersFlag(region, DefaultFlag.INTERACT);
-        setMembersFlag(region, DefaultFlag.CHEST_ACCESS);
-        setOwnersFlag(region, DefaultFlag.BLOCK_PLACE);
-        setOwnersFlag(region, DefaultFlag.BLOCK_BREAK);
-        setOwnersFlag(region, DefaultFlag.BUILD);
-    }
-
-    private void setOwnersFlag(ProtectedRegion region, StateFlag flag) {
+    private void setGroupFlag(ProtectedRegion region, StateFlag flag, RegionGroup group) {
         region.setFlag(flag, StateFlag.State.ALLOW);
-        RegionGroupFlag groupOnly = flag.getRegionGroupFlag();
-        region.setFlag(groupOnly, RegionGroup.OWNERS);
-    }
-
-    private void setMembersFlag(ProtectedRegion region, StateFlag flag) {
-        region.setFlag(flag, StateFlag.State.ALLOW);
-        RegionGroupFlag groupOnly = flag.getRegionGroupFlag();
-        region.setFlag(groupOnly, RegionGroup.MEMBERS);
+        if (flag.getRegionGroupFlag() != null) region.setFlag(flag.getRegionGroupFlag(), group);
     }
 
     public Optional<ProtectedRegion> getHighestPriority(Location location) {
-        return WorldGuardPlugin.inst()
-                .getRegionManager(location.getWorld())
-                .getApplicableRegions(location)
-                .getRegions().stream()
-                .reduce((a, b) -> a.getPriority() > b.getPriority() ? a : b);
+        return getRegionsAt(location).stream().max(Comparator.comparingInt(ProtectedRegion::getPriority).thenComparing(ProtectedRegion::getId));
     }
 
     public boolean canBuild(Player player, Block block) {
-        return WorldGuardPlugin.inst().canBuild(player, block);
+        var localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
+        if (WorldGuard.getInstance().getPlatform().getSessionManager().hasBypass(localPlayer, BukkitAdapter.adapt(block.getWorld()))) return true;
+        return WorldGuard.getInstance().getPlatform().getRegionContainer().createQuery()
+                .testBuild(BukkitAdapter.adapt(block.getLocation()), localPlayer);
     }
 }

@@ -4,12 +4,9 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
-import java.util.UUID;
 
 @Data @EqualsAndHashCode(callSuper = false)
 @DatabaseTable(tableName = CellTeleport.TABLE_NAME)

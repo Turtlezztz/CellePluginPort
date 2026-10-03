@@ -51,9 +51,6 @@ public class MigrateCell {
         if(sign != null) {
             cell.setSign(new CellSign(sign.getBlockX(), sign.getBlockY(), sign.getBlockZ(), sign.getWorld().getName()));
         }
-        users.getStores().getCellStore().persist(cell);
-        Cell fetched = users.getStores().getCellStore().getFromName(cell.getName()).get();
-        members.forEach(uuid -> fetched.addMember(users.get(uuid, Bukkit.getOfflinePlayer(uuid).getName())));
         return cell;
     }
 }

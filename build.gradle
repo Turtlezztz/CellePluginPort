@@ -1,147 +1,87 @@
-
-buildscript {
-    repositories {
-        jcenter()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-
-    dependencies {
-        classpath "com.github.johnrengelman:shadow:8.1.1"
-    }
-}
-
 plugins {
     id 'java'
-    id("com.gradleup.shadow") version "8.3.3"
-    id 'maven-publish'
+    id 'com.gradleup.shadow' version '9.2.2'
 }
 
-group = 'me.abdiskiosk'
-version = '1.1.3'
+group = 'dk.setups'
+version = '2.0.0'
 
+def paperVersion = '26.2.build.129-stable'
 
-compileJava.options.encoding = 'UTF-8'
-
-
-configurations {
-    compileClasspath {
-        extendsFrom compileOnly
-        canBeResolved = true
-    }
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 
-configurations.all {
-    resolutionStrategy {
-        force 'org.yaml:snakeyaml:2.2'
-    }
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 25
+    options.compilerArgs += ['-parameters']
 }
-
-compileJava {
-    options.compilerArgs << '-parameters'
-}
-
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
-    maven {
-        url {
-            uri("https://hub.spigotmc.org/nexus/content/groups/public/")
-        }
-    }
-    maven {
-        url {
-            uri("https://storehouse.okaeri.eu/repository/maven-releases/")
-        }
-    }
-    maven { url 'https://maven.enginehub.org/repo/' }
-    maven { url 'https://repo.codemc.io/repository/maven-releases/' }
-    maven { url 'https://jitpack.io' }
-    maven { url = "https://repo.extendedclip.com/content/repositories/placeholderapi/" }
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://maven.enginehub.org/repo/' }
+    maven { url = 'https://storehouse.okaeri.eu/repository/maven-releases/' }
+    maven { url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/' }
+    maven { url = 'https://jitpack.io' }
+}
 
-    mavenLocal()
+// Paper owns Adventure, Gson and Guava. Never shade a second copy of its public API.
+configurations.configureEach {
+    exclude group: 'org.spigotmc'
+    exclude group: 'org.bukkit'
+    exclude group: 'net.kyori', module: 'adventure-platform-bukkit'
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.9.1')
+    compileOnly "io.papermc.paper:paper-api:${paperVersion}"
+    compileOnly 'com.sk89q.worldguard:worldguard-bukkit:7.0.19'
+    compileOnly 'com.sk89q.worldedit:worldedit-bukkit:7.4.5'
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
+    compileOnly 'me.clip:placeholderapi:2.12.3'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+
+    implementation 'com.j256.ormlite:ormlite-jdbc:6.1'
+    implementation 'org.xerial:sqlite-jdbc:3.50.3.0'
+    implementation 'org.yaml:snakeyaml:2.2'
+    implementation('dev.triumphteam:triumph-gui:3.1.13') { exclude group: 'net.kyori' }
+    implementation('eu.okaeri:okaeri-platform-bukkit:0.4.19') {
+        exclude group: 'com.google'
+        exclude group: 'net.kyori'
+    }
+    implementation('eu.okaeri:okaeri-i18n-minecraft-adventure:5.1.0') {
+        exclude group: 'com.google'
+        exclude group: 'net.kyori'
+    }
+    implementation 'eu.okaeri:okaeri-configs-yaml-snakeyaml:5.0.1'
+
+    testImplementation "io.papermc.paper:paper-api:${paperVersion}"
+    testImplementation 'com.sk89q.worldguard:worldguard-bukkit:7.0.19'
+    testImplementation 'com.sk89q.worldedit:worldedit-bukkit:7.4.5'
+    testImplementation 'org.mockbukkit.mockbukkit:mockbukkit-v26.2:4.116.1'
+    testImplementation platform('org.junit:junit-bom:5.13.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.xerial:sqlite-jdbc:3.45.1.0'
-    testImplementation 'com.h2database:h2:2.2.224'
-    testImplementation 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
-
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
-
-    //Add snakeyaml
-    implementation'com.j256.ormlite:ormlite-jdbc:6.1'
-    implementation('org.yaml:snakeyaml:2.2') {
-        version {
-            strictly '2.2'
-        }
-    }
-    implementation 'dev.triumphteam:triumph-gui:3.1.7'
-    implementation 'eu.okaeri:okaeri-platform-bukkit:0.4.19' exclude group: "com.google"
-    implementation 'eu.okaeri:okaeri-i18n-minecraft-adventure:5.1.0' exclude group: "com.google"
-    implementation 'eu.okaeri:okaeri-configs-yaml-snakeyaml:5.0.1' exclude group: "com.google"
-
-
-    compileOnly 'org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT'
-    compileOnly 'com.sk89q.worldguard:worldguard-legacy:6.1.3-SNAPSHOT'
-    compileOnly 'org.projectlombok:lombok:1.18.36' exclude group: 'org.yaml'
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7" exclude group: 'org.yaml'
-    compileOnly "me.clip:placeholderapi:2.11.6"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-task myCodeJar(type: Jar) {
-    from sourceSets.main.output
-    archiveClassifier.set('myCode')
+tasks.processResources {
+    inputs.property 'version', project.version
+    filesMatching('plugin.yml') { expand(version: project.version) }
 }
-// Task to create a JAR for all bundled dependencies
-task dependenciesJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    configurations = [project.configurations.compileClasspath, project.configurations.runtimeClasspath]
 
-    from sourceSets.main.output
-    exclude('**/dk/setups/**')
-    exclude('plugin.yml')
+tasks.test { useJUnitPlatform() }
 
+tasks.shadowJar {
+    archiveClassifier = 'combined'
+    mergeServiceFiles()
     relocate 'eu.okaeri', 'dk.setups.libs.celle.eu.okaeri'
     relocate 'org.yaml', 'dk.setups.libs.celle.org.yaml'
     relocate 'com.j256', 'dk.setups.libs.celle.com.j256'
-    relocate 'net.kyori', 'dk.setups.libs.celle.net.kyori'
     relocate 'dev.triumphteam', 'dk.setups.libs.celle.dev.triumphteam'
-    relocate 'com.google', 'dk.setups.libs.celle.com.google'
-
-    archiveClassifier.set('dependencies')
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
 }
 
-// Task to create a JAR for both your own code and all bundled dependencies
-task combinedJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    relocate 'eu.okaeri', 'dk.setups.libs.celle.eu.okaeri'
-    relocate 'org.yaml', 'dk.setups.libs.celle.org.yaml'
-    relocate 'com.j256', 'dk.setups.libs.celle.com.j256'
-    relocate 'net.kyori', 'dk.setups.libs.celle.net.kyori'
-    relocate 'dev.triumphteam', 'dk.setups.libs.celle.dev.triumphteam'
-    relocate 'com.google.gson', 'dk.setups.libs.celle.com.google'
-
-    from sourceSets.main.output
-    configurations = [project.configurations.runtimeClasspath]
-    archiveClassifier.set('combined')
-}
-
-build.dependsOn /*myCodeJar, dependenciesJar,*/ combinedJar
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = group
-            artifactId = 'gui-lib'
-            version = version
-            from components.java
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
+tasks.register('combinedJar') { dependsOn tasks.shadowJar }
+tasks.build { dependsOn tasks.shadowJar }

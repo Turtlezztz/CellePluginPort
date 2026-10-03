@@ -38,9 +38,11 @@ public class CellsInRegionGUI extends ConfigurableGUI<CellsInRegionGUIState> {
     @Getter
     private LinkedHashMap<String, ConfigGUIItem> items = new ItemMapBuilder()
             .addItem("decoration", new ConfigGuiItemBuilder()
-                    .setItem(new ItemStack(Material.STAINED_GLASS_PANE, 1, (short) 15))
+                    .setItem(new ItemStack(Material.BLACK_STAINED_GLASS_PANE))
                     .setSlots(IntStream.range(0, 9), IntStream.range(45, 54))
                     .build())
+            .addItem("nextpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aNæste side").build()).setSlot(5, 6).build())
+            .addItem("prevpage", new ConfigGuiItemBuilder().setItem(ItemBuilder.from(Material.ARROW).setName("§aForrige side").build()).setSlot(5, 2).build())
             .build();
 
     private List<Integer> cellItemSlots = IntStream.range(9, 45).boxed().collect(Collectors.toList());
@@ -60,17 +62,19 @@ public class CellsInRegionGUI extends ConfigurableGUI<CellsInRegionGUIState> {
     protected void addItems(CellsInRegionGUIState state, BaseGui gui) {
         super.addItems(state, gui);
         Collection<ProtectedRegion> childRegions = worldGuard.getRegionsIn(state.getPlayer().getWorld(), state.getRegion());
-        List<Cell> unrented = store.getCellStore().getCellsInRegions(childRegions)
+        List<Cell> unrented = store.getCellStore().getCellsInRegions(childRegions, state.getPlayer().getWorld().getName())
                 .stream()
                 .filter(c -> !c.isRented())
+                .sorted(Comparator.comparing(Cell::getName))
                 .collect(Collectors.toList());
 
-        for(int i = 0; i < unrented.size(); i++) {
-            if(i > cellItemSlots.size()) {
-                return;
-            }
-            gui.setItem(cellItemSlots.get(i), new GuiItem(createCellItem(unrented.get(i), state)));
-        }
+        if (cellItemSlots.isEmpty()) return;
+        state.setPaginationProvider(new dk.setups.celle.gui.pagination.PaginationProvider<>(gui,
+                (page, size) -> {
+                    int start = Math.min(unrented.size(), Math.multiplyExact(page - 1, size));
+                    return unrented.subList(start, Math.min(unrented.size(), start + size));
+                }, cellItemSlots, cell -> new GuiItem(cell.map(value -> createCellItem(value, state)).orElseGet(() -> new ItemStack(Material.AIR)))));
+        state.getPaginationProvider().update();
     }
 
     protected ItemStack createCellItem(Cell cell, GUIState state) {
@@ -78,5 +82,12 @@ public class CellsInRegionGUI extends ConfigurableGUI<CellsInRegionGUIState> {
     }
 
     @Override
-    public void addClickEvents(Map<String, GuiAction<InventoryClickEvent>> events, CellsInRegionGUIState state) {}
+    public void addClickEvents(Map<String, GuiAction<InventoryClickEvent>> events, CellsInRegionGUIState state) {
+        events.put("nextpage", event -> changePage(state, 1));
+        events.put("prevpage", event -> changePage(state, -1));
+    }
+    private void changePage(CellsInRegionGUIState state, int offset) {
+        state.setPage(Math.max(1, state.getPage() + offset));
+        if (state.getPaginationProvider() != null) state.getPaginationProvider().setPage(state.getPage());
+    }
 }
